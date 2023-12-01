@@ -1,0 +1,72 @@
+#!/bin/bash
+
+export BASE=/mnt/c/c
+export ANDROID_NDK_ROOT=${BASE}/android-ndk-r26
+export ANDROID_NDK_ROOT2=c:/c/c/android-ndk-r26
+PATH=${ANDROID_NDK_ROOT}:${ANDROID_NDK_ROOT}/toolchains/llvm/prebuilt/linux-x86_64/bin:${ANDROID_NDK_ROOT}/toolchains/arm-linux-androideabi-4.9/prebuilt/linux-x86_64/bin:${ANDROID_NDK_ROOT2}/toolchains/llvm/prebuilt/linux-x86_64/bin:${ANDROID_NDK_ROOT2}/toolchains/arm-linux-androideabi-4.9/prebuilt/linux-x86_64/bin:$PATH
+#export CC=/mnt/c/c/android-ndk-r26/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android26-clang
+#export CPP=/mnt/c/c/android-ndk-r26/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android26-clang++
+
+export OPENSSL=${BASE}/openssl
+export CMAKE_TOOLCHAIN=${ANDROID_NDK_ROOT}/build/cmake/android.toolchain.cmake
+export NDK_PROJECT_PATH=`pwd`
+
+export GLIB=${BASE}/android/gstreamer/arm64/lib
+
+export OPENSSL=${BASE}/openssl
+export OPENSSL_ROOT=${BASE}/openssl
+export OPENSSL_INCLUDE_DIR=${OPENSSL_ROOT}/include
+export OPENSSL_LIBRARIES=${OPENSSL_ROOT}/buildandroid
+export PKG_CONFIG_PATH=${OPENSSL_LIBRARIES}
+export LIBRARY_PATH=${OPENSSL}/buildandroid:${GLIB}
+export INC1=${OPENSSL}/include
+export INC2=${BASE}/android/gstreamer/arm64/include
+
+mkdir -p buildandroid 2>/dev/null
+export CFLAGS="-I${INC1} -I${INC2} -I${OPENSSL}/include -L${OPENSSL}/buildandroid -L${GLIB}"
+export CPPFLAGS="-I${INC1} -I${INC2} -I${OPENSSL}/include -L${OPENSSL}/buildandroid -L${GLIB}"
+export LDFLAGS="-Wl,-undefined-version -L${OPENSSL}/buildandroid -L${GLIB}"
+export CPPLDFLAGS="-Wl,-undefined-version -L${OPENSSL}/buildandroid -L${GLIB}"
+
+export NDK=/mnt/c/c/android-ndk-r26
+export TOOLCHAIN=$NDK/toolchains/llvm/prebuilt/linux-x86_64
+# Only choose one of these, depending on your device...
+export TARGET=aarch64-linux-android
+#export TARGET=armv7a-linux-androideabi
+#export TARGET=i686-linux-android
+#export TARGET=x86_64-linux-android
+# Set this to your minSdkVersion.
+export API=29
+# Configure and build.
+export AR=$TOOLCHAIN/bin/llvm-ar
+export CC=$TOOLCHAIN/bin/$TARGET$API-clang
+export AS=$CC
+export CXX=$TOOLCHAIN/bin/$TARGET$API-clang++
+export LD=$TOOLCHAIN/bin/ld
+export RANLIB=$TOOLCHAIN/bin/llvm-ranlib
+export STRIP=$TOOLCHAIN/bin/llvm-strip
+
+cmake -B buildandroid  -DCMAKE_BUILD_TYPE=Debug -DCMAKE_TOOLCHAIN_FILE=$CMAKE_TOOLCHAIN -DANDROID_ABI=arm64-v8a -DANDROID_PLATFORM=26 \
+            -DOPENSSL_CRYPTO_LIBRARY=${OPENSSL_LIBRARIES}/lib/libcrypto.a \
+      -DOPENSSL_SSL_LIBRARY=${OPENSSL_LIBRARIES}/lib/libssl.a \
+      -DOPENSSL_INCLUDE_DIR=${OPENSSL_INCLUDE_DIR} \
+      -DOPENSSL_ROOT_DIR=${OPENSSL_ROOT_DIR}
+cd buildandroid
+make -j 24
+
+#./configure --prefix=`pwd`/local --enable-static --disable-shared -host=$TARGET -build=`gcc -dumpmachine|sed -e s/-linux/-pc-linux/` \
+#	    --without-libintl-prefix
+#make -j 24
+#make install
+
+#pkg-config --cflags --libs iconv
+
+#meson setup -Dcrypto-library=openssl --cross-file cross-android29.txt buildandroid && ninja -j 24 -C buildandroid
+#ninja -j 24 -C buildandroid
+
+#ndk-build
+
+#cmake -B build -DUSE_GNUTLS=0 -DUSE_NICE=1 -DCMAKE_BUILD_TYPE=Debug -DCMAKE_TOOLCHAIN_FILE=$CMAKE_TOOLCHAIN -DANDROID_ABI=arm64-v8a -DANDROID_PLATFORM=26 \
+#-DOPENSSL_ROOT_DIR=${OPENSSL} -DOPENSSL_INCLUDE_DIR=${OPENSSL}/include -DOPENSSL_LIBRARIES=${OPENSSL}/lib -DOPENSSL_CRYPTO_LIBRARY=${OPENSSL}/lib/libcrypto.a \
+#-DOPENSSL_USE_STATIC_LIBS=TRUE -DCMAKE_FIND_ROOT_PATH_MODE_INCLUDE=NEVER -DCMAKE_FIND_ROOT_PATH_MODE_LIBRARY=NEVER
+
